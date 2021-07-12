@@ -10,8 +10,8 @@ public class BfCompiler {
             ".section .text\n" +
             ".globl _start\n" +
             "_start:\n" +
-            "mov $0, %rdi\n";
-
+            "mov $arr, %r8\n";
+            
     public static void main(String[] args){
         Scanner in = new Scanner(System.in);
         String s = in.next();
@@ -20,16 +20,14 @@ public class BfCompiler {
         for(int i = 0; i < s.length(); i++){
             char c = s.charAt(i);
             if(c == '>'){
-                program += "inc %rdi\n";
+                program += "inc %r8\n";
             }else if (c == '<'){
-                program += "dec %rdi\n";
+                program += "dec %r8\n";
             }else if (c == '+'){
-                program += "incb arr(,%rdi,1)\n";
+                program += "incb (%r8)\n";
             }else if (c == '-'){
-                program += "decb arr(,%rdi,1)\n";
+                program += "decb (%r8)\n";
             }else if (c == '.' || c == ','){
-                program += "mov %rdi, %rdx\n";
-                program += "add $arr, %rdx\n";
                 int syscall_num = 0;
                 if(c == '.'){
                     syscall_num = 1;
@@ -38,21 +36,19 @@ public class BfCompiler {
                 }
                 program += "mov $" + syscall_num + 
                      ", %rax\n" +
-                        "mov %rdi, %r9\n" +
+                        "mov %r8, %rsi\n" +
                         "mov $1, %rdi\n" +
-                        "mov %rdx, %rsi\n" +
                         "mov $1, %rdx\n" + 
-                        "syscall\n" + 
-                        "mov     %r9, %rdi\n";
+                        "syscall\n"; 
             } else if (c == '['){
-                program += "cmpb $0, arr(,%rdi,1)\n";
+                program += "cmpb $0, (%r8)\n";
                 program += "je " + "R" + label_num + "\n";
                 String label = "L" + label_num + ":\n";
                 program += label;
                 jmp_labels.add(label_num);
                 label_num++;
             }else if (c == ']'){
-                program += "cmpb $0, arr(,%rdi,1)\n";
+                program += "cmpb $0, (%r8)\n";
                 int label_number = jmp_labels.pop();
                 String where_to_jmp = "L" + label_number;
                 program += "jne " + where_to_jmp + "\n";
@@ -61,7 +57,7 @@ public class BfCompiler {
             }
         }
         program += "mov $1, %rax\n" +
-                "syscall";
+                "int $0x80";
 
         System.out.println(program);
     }
